@@ -4,6 +4,7 @@
 // Only these fields are read, so both `FirmwareSchema` and lighter shapes fit.
 interface FirmwareLike {
   id: number;
+  platform_id?: number;
   file_name: string;
   missing_from_fs: boolean;
 }
@@ -46,20 +47,13 @@ export function firmwareExternalFiles(
   core: string,
   firmware: readonly FirmwareLike[],
 ): Record<string, string> {
-  // PUAE picks among several Kickstarts by name for each game.
-  if (core !== "puae") return {};
-
+  // God-Mode Injection: Mount every firmware file from the filesystem.
   return Object.fromEntries(
     firmware
-      .filter(
-        ({ file_name, missing_from_fs }) =>
-          !missing_from_fs &&
-          !UNSAFE_FILE_NAME.test(file_name) &&
-          !ARCHIVE_EXTENSION.test(file_name),
-      )
-      .map(({ id, file_name }) => [
+      .filter(({ file_name, missing_from_fs }) => !missing_from_fs && !UNSAFE_FILE_NAME.test(file_name))
+      .map(({ platform_id, id, file_name }) => [
         `${SYSTEM_DIRECTORY}/${file_name}`,
-        `/api/firmware/${id}/content/${encodeURIComponent(file_name)}`,
+        `/api/firmware/fs_content/${platform_id || id}/${encodeURIComponent(file_name)}`,
       ]),
   );
 }

@@ -467,7 +467,7 @@ async function boot() {
 
     const bios = biosFromStorage ?? biosFromConfig ?? null;
     window.EJS_biosUrl = bios
-      ? `/api/firmware/${bios.id}/content/${bios.file_name}`
+      ? `/api/firmware/fs_content/${bios.platform_id || bios.id}/${bios.file_name}`
       : "";
     window.EJS_externalFiles = firmwareExternalFiles(core, firmware);
   } catch {

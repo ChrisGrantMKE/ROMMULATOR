@@ -101,11 +101,31 @@ def get_platform_firmware(
     Returns:
         list[FirmwareSchema]: Firmware stored in the database
     """
-    return [
-        FirmwareSchema.model_validate(f)
-        for f in db_firmware_handler.list_firmware(platform_id=platform_id)
-    ]
-
+    perms = get_permissions(request)
+    if platform_id:
+        from handler.database import db_platform_handler
+        platform = db_platform_handler.get_platform(platform_id)
+        if platform:
+            from handler.config_handler import db_config_handler
+            import os, hashlib
+            from pathlib import Path
+            lib_path = db_config_handler.get_library_path()
+            bios_path = Path(lib_path) / "bios" / platform.fs_slug
+            fake_firmware = []
+            if bios_path.is_dir():
+                for f in bios_path.iterdir():
+                    if f.is_file():
+                        fake_id = int(hashlib.md5(f.name.encode()).hexdigest()[:8], 16)
+                        fake_firmware.append(FirmwareSchema(
+                            id=fake_id,
+                            platform_id=platform_id,
+                            file_name=f.name,
+                            missing_from_fs=False,
+                            created_at=platform.created_at,
+                            updated_at=platform.updated_at
+                        ))
+            return fake_firmware
+    return []
 
 @protected_route(
     router.get,

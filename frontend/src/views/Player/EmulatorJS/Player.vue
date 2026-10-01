@@ -46,6 +46,7 @@ declare global {
   interface Window {
     EJS_core: string;
     EJS_biosUrl: string;
+      EJS_externalFiles?: Record<string, string>;
     EJS_player: string;
     EJS_pathtodata: string;
     EJS_color: string;
@@ -94,9 +95,14 @@ window.EJS_gameUrl = getDownloadPath({
   rom: romRef.value,
   fileIDs: props.disc ? [props.disc] : [],
 });
-window.EJS_biosUrl = props.bios
-  ? `/api/firmware/${props.bios.id}/content/${props.bios.file_name}`
-  : "";
+// GOD-MODE BIOS INJECTION
+window.EJS_biosUrl = props.bios ? `/api/firmware/fs_content/${props.rom.platform_id}/${props.bios.file_name}` : "";
+fetch(`/api/firmware?platform_id=${props.rom.platform_id}`).then(res => res.json()).then(files => {
+  window.EJS_externalFiles = {};
+  files.forEach(f => {
+    window.EJS_externalFiles[`/home/web_user/retroarch/userdata/system/${f.file_name}`] = `/api/firmware/fs_content/${props.rom.platform_id}/${f.file_name}`;
+  });
+});
 window.EJS_player = "#game";
 window.EJS_color = "#A453FF";
 window.EJS_alignStartButton = "center";
